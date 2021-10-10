@@ -1,0 +1,58 @@
+reparation Guide - Get This Book
+ Menu
+Tecmint: Linux Howtos, Tutorials & Guides
+ Menu
+A Shell Script to Send Email Alert When Memory Gets Low
+Aaron KiliNovember 29, 2017 CategoriesBash Shell, Monitoring Tools 13 Comments
+A powerful aspect of Unix/Linux shell programs such as bash, is their amazing support for common programming constructs that enable you to make decisions, execute commands repeatedly, create new functions, and so much more. You can write commands in a file known as a shell script and execute them collectively.
+
+This offers you a reliable and effective means of system administration. You can write scripts to automate tasks, for instance daily back ups, system updates etc; create new custom commands/utilities/tools and beyond. You can write scripts to help you keep up with what’s unfolding on a server.
+
+One of the critical components of a server is memory (RAM), it greatly impacts on overall performance of a system.
+
+In this article, we will share a small but useful shell script to send an alert email to one or more system administrator(s), if server memory is running low.
+
+This is script is particularly useful for keeping an eye on Linux VPS (Virtual Private Servers) with small amount of memory, say of about 1GB (approximately 990MB).
+
+Testing Environment Setup
+A CentOS/RHEL 7 production server with mailx utility installed with working postfix mail server.
+This is how the alertmemory.sh script works: first it checks the free memory size, then determines if amount of free memory is less or equal to a specified size (100 MB for the purpose of this guide), used as a bench mark for the least acceptable free memory size.
+
+If this condition is true, it will generate a list of the top 10 processes consuming server RAM and sends an alert email to specified email addresses.
+
+Note: You will have to make a few changes to script (especially the mail sender utility, use the appropriate flags) to meet your Linux distributions requirements.
+
+Shell Script to Check Server Memory
+#!/bin/bash 
+#######################################################################################
+#Script Name    :alertmemory.sh
+#Description    :send alert mail when server memory is running low
+#Args           :       
+#Author         :Aaron Kili Kisinga
+#Email          :aaronkilik@gmail.com
+#License       : GNU GPL-3	
+#######################################################################################
+## declare mail variables
+##email subject 
+subject="Server Memory Status Alert"
+##sending mail as
+from="server.monitor@example.com"
+## sending mail to
+to="admin1@example.com"
+## send carbon copy to
+also_to="admin2@example.com"
+
+## get total free memory size in megabytes(MB) 
+free=$(free -mt | grep Total | awk '{print $4}')
+
+## check if free memory is less or equals to  100MB
+if [[ "$free" -le 100  ]]; then
+        ## get top processes consuming system memory and save to temporary file 
+        ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%mem | head >/tmp/top_proccesses_consuming_memory.txt
+
+        file=/tmp/top_proccesses_consuming_memory.txt
+        ## send email if system memory is running low
+        echo -e "Warning, server memory is running low!\n\nFree memory: $free MB" | mailx -a "$file" -s "$subject" -r "$from" -c "$to" "$also_to"
+fi
+
+exit 0
